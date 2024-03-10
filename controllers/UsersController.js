@@ -1,9 +1,11 @@
 // App controller for express router
 import sha1 from 'sha1';
+import { ObjectId } from 'mongodb';
 import dbClient from '../utils/db';
+import redisClient from '../utils/redis';
 
 /**
- * Handles express server `/users` endpoint.
+ * Handles `/users` & `/users/me` endpoint.
  */
 class UsersController {
   /**
@@ -39,6 +41,37 @@ class UsersController {
 
     // respnd with id & email of created user
     res.status(201).send({ id: result.insertedId, email });
+  }
+
+  /**
+   * Retrieve the user based on the token.
+   * @param {Request} req
+   * @param {Response} res
+   */
+  static async getMe(req, res) {
+    // get token from X-Token header in request
+    const token = req.get('X-Token');
+    if (!token) {
+      res.status(401).send({ error: 'Unauthorized' });
+    }
+
+    const key = `auth_${token}`;
+    // retrive user id from redis
+    const userId = await redisClient.get(key);
+
+    if (!userId) {
+      res.status(401).send({ error: 'Unauthorized' });
+      return;
+    }
+    // retrieve user from db using user id
+    const user = await dbClient.db.collection('users')
+      .findOne({ _id: new ObjectId(userId) }); // convert userId(strint) to ObjectId
+    if (!user) { // as precaution. (incase user_id is stored in redis but user not in db)
+      res.status(401).send({ error: 'Unauthorized' });
+      return;
+    }
+    const { _id, email } = user;
+    res.send({ id: _id.toString(), email });
   }
 }
 
