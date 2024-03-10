@@ -1,5 +1,5 @@
 // App controller for express router
-import crypto from 'crypto';
+import sha1 from 'sha1';
 import dbClient from '../utils/db';
 
 /**
@@ -31,7 +31,7 @@ class UsersController {
     }
 
     // hash the password in SHA1. (create hash, add data to hash, then digest)
-    const hashedPassword = crypto.createHash('sha1').update(password).digest('hex');
+    const hashedPassword = sha1(password);
 
     // add new user to db
     const newUser = { email, password: hashedPassword };
