@@ -38,10 +38,10 @@ class RedisClient {
   }
 
   /**
-   * Stores key-value pair in Redis with expiration time of duration.
+   * Stores key-value pair in Redis with expiration time of duration seconds.
    * @param {String} key The key of the item to set.
    * @param {String} value The value of the item to set.
-   * @param {Number} duration The expiration time of the key.
+   * @param {Number} duration The expiration time of the key in seconds.
    * @returns {Promise<String>} Simple string reply.
    */
   async set(key, value, duration) {
