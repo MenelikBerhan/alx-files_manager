@@ -1,9 +1,9 @@
 // App controller for express router
-import redisClient from '../utils/redis';
 import dbClient from '../utils/db';
+import redisClient from '../utils/redis';
 
 /**
- * Handles express server endpoints.
+ * Handles express server `/status` & `/stats` endpoints.
  */
 class AppController {
   /**
