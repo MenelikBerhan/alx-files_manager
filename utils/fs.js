@@ -1,6 +1,7 @@
 // File systems Client
-import fs from 'fs/promises';
 import path from 'path';
+
+const fs = require('fs').promises;
 
 /**
  * File system client that asynchronously handles
