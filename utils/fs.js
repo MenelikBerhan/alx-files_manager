@@ -2,6 +2,7 @@
 import path from 'path';
 
 const fs = require('fs').promises;
+const { statSync, mkdirSync } = require('fs');
 
 /**
  * File system client that asynchronously handles
@@ -14,6 +15,7 @@ class FileSystemClient {
 
     this.setUpDone = false;
 
+    /*  Using asynchronous stat & mkdir
     // check if given storage directory exists. If not create one.
     fs.stat(this.storagePath)
       .then((stat) => {
@@ -35,7 +37,25 @@ class FileSystemClient {
       .then(() => {
         this.setUpDone = true;
         console.log('File system client successfuly started.');
-      });
+      }); */
+
+    // using Synchronous stat & mkdir
+    let createDir;
+    // create storage dir if a directory doesn't exist at given path
+    try {
+      const dirStat = statSync(this.storagePath);
+      createDir = !dirStat.isDirectory();
+    } catch (e) {
+      if (e.code !== 'ENOENT') throw e;
+      createDir = true;
+    } finally {
+      if (createDir) {
+        mkdirSync(this.storagePath);
+        console.log(`Created storage dir ${this.storagePath}`);
+      }
+      console.log('File system client successfuly started.');
+      this.setUpDone = true;
+    }
   }
 
   /**
