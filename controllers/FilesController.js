@@ -1,5 +1,4 @@
 // Files controller for express router
-// import sha1 from 'sha1';
 import { v4 as uuidv4 } from 'uuid';
 import { ObjectId } from 'mongodb';
 import dbClient from '../utils/db';
@@ -34,7 +33,7 @@ class FilesController {
     }
     // retrieve user from db using user id
     const user = await dbClient.db.collection('users')
-      .findOne({ _id: new ObjectId(userId) }); // convert userId(strint) to ObjectId
+      .findOne({ _id: new ObjectId(userId) }); // convert userId(string) to ObjectId
     if (!user) { // as precaution. (incase user_id is stored in redis but user not in db)
       res.status(401).send({ error: 'Unauthorized' });
       return;
@@ -42,9 +41,6 @@ class FilesController {
     // get params from request body
     const {
       name, type, data, parentId,
-    } = req.body;
-    let { // will be set to defaults is not provided
-      isPublic,
     } = req.body;
 
     // check if valid required fields are passed in request
@@ -76,10 +72,11 @@ class FilesController {
       }
     }
 
-    // set defaul values for optional params not passed in request
-    isPublic = isPublic || false;
+    // if isPublic is not passed set it to default value of false
+    const isPublic = req.body.isPublic || false;
     // if parentId create an ObjectId with it, to be used for saving in db
     const parentIdDb = parentId ? new ObjectId(parentId) : '0';
+    // if parentId use string, else set to 0. to be used for response body
     const parentIdResponse = parentId || 0;
 
     // If the type is folder, add the new file to DB & return the new file
@@ -89,7 +86,7 @@ class FilesController {
           userId: user._id, name, type, isPublic, parentId: parentIdDb,
         });
 
-      res.status(201).send({ // use string type for userId
+      res.status(201).send({ // use string type for userId (check if isPublic should be returned)
         id: result.insertedId, userId, name, type, isPublic, parentId: parentIdResponse,
       });
       return;
