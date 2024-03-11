@@ -53,6 +53,7 @@ class UsersController {
     const token = req.get('X-Token');
     if (!token) {
       res.status(401).send({ error: 'Unauthorized' });
+      return;
     }
 
     const key = `auth_${token}`;
