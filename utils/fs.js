@@ -51,7 +51,7 @@ class FileSystemClient {
     } finally {
       if (createDir) {
         mkdirSync(this.storagePath);
-        console.log(`Created storage dir ${this.storagePath}`);
+        console.log(`Created storage dir: '${this.storagePath}'`);
       }
       console.log('File system client successfuly started.');
       this.setUpDone = true;
