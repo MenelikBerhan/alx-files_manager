@@ -1,5 +1,5 @@
 module.exports = {
-  root: true,
+  // root: true,
   env: {
     browser: false,
     es6: true,
@@ -8,7 +8,7 @@ module.exports = {
   },
   extends: [
     'airbnb-base',
-    // 'plugin:jest/all',
+    'plugin:jest/all',
     'plugin:mocha/recommended',
   ],
   globals: {
@@ -20,7 +20,7 @@ module.exports = {
     sourceType: 'module',
   },
   plugins: [
-    // 'jest',
+    'jest',
     'mocha',
   ],
   rules: {
