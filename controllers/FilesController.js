@@ -216,7 +216,7 @@ class FilesController {
         // $limit: 2,
       },
       { $sort: { _id: 1 } }, // sort by id
-      { $skip: page * 20 }, // skip to page
+      { $skip: parseInt(page, 10) * 20 }, // skip to page
       { $limit: 20 },
     ];
 
