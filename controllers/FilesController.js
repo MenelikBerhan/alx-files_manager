@@ -346,7 +346,7 @@ class FilesController {
 
     // if document type is a folder return error
     if (document.type === 'folder') {
-      res.status(404).send({ error: 'Not found' });
+      res.status(404).send({ error: "A folder doesn't have content" });
       return;
     }
 
