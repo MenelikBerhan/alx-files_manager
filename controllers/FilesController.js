@@ -207,7 +207,7 @@ class FilesController {
 
     // if parentId is given find users document in it. Else return from root (parentId = 0)
     let filter;
-    if (parentId === '0') filter = { userId: user._id };
+    if (parentId === '0') filter = { userId: user._id, parentId };
     else filter = { userId: user._id, parentId: new ObjectId(parentId) };
 
     // get page no from query string. each page contains 20 documents & page no. starts from 0.
