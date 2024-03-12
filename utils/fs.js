@@ -75,8 +75,11 @@ class FileSystemClient {
   async readFile(filePath) {
     // append file name to storage path
     // const filePath = path.join(this.storagePath, fileName);
-    //
-    return fs.readFile(filePath);
+    try {
+      return fs.readFile(filePath);
+    } catch (e) {
+      return null;
+    }
   }
 
   /**

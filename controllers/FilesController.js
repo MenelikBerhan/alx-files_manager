@@ -362,42 +362,45 @@ class FilesController {
     // get token from X-Token header in request
     console.log('hereeee');
     const token = req.get('X-Token');
-    if (!token) {
-      res.status(401).send({ error: 'Unauthorized' });
-      return;
-    }
-
     const key = `auth_${token}`;
     // retrive user id from redis
     const userId = await redisClient.get(key);
 
-    if (!userId) {
-      res.status(401).send({ error: 'Unauthorized' });
-      return;
-    }
-    // retrieve user from db using user id
-    const user = await dbClient.db.collection('users')
-      .findOne({ _id: new ObjectId(userId) }); // convert userId(string) to ObjectId
-    if (!user) { // as precaution. (incase user_id is stored in redis but user not in db)
-      res.status(401).send({ error: 'Unauthorized' });
-    }
-
-    // retrieve document of given id linked to current user
+    // retrieve document of given id
     const documentId = req.params.id;
     if (documentId.length !== 24) { // ObjectId Argument must be a string of 12 bytes
       res.status(404).send({ error: 'Not found' });
     }
     const document = await dbClient.db.collection('files')
-      .findOne({ _id: new ObjectId(documentId), userId: user._id });
+      .findOne({ _id: new ObjectId(documentId) });
     if (!document) {
       res.status(404).send({ error: 'Not found' });
       return;
     }
-    // Get Contet-Type (with mime tye and character set encoding) from file name
-    const contentType = mime.contentType(document.name);
-    console.log(contentType);
+
+    // if document is not public and user is not the owner return Not found
+    if (!document.isPublic && (!userId || document.userId.toString() !== userId)) {
+      res.status(404).send({ error: 'Not found' });
+      return;
+    }
+
+    // if document type is a folder return error
+    if (document.type === 'folder') {
+      res.status(404).send({ error: 'Not found' });
+      return;
+    }
+
     // read data from file
     const data = await fsClient.readFile(document.localPath);
+
+    // if document is not found at localPath return error
+    if (data === null) {
+      res.status(404).send({ error: 'Not found' });
+      return;
+    }
+
+    // Get Contet-Type (with mime tye and character set encoding) from file name
+    const contentType = mime.contentType(document.name);
     // set header and set data
     res.set('Content-type', contentType);
     res.send(data);
