@@ -28,18 +28,11 @@ class FilesController {
     const key = `auth_${token}`;
     // retrive user id from redis
     const userId = await redisClient.get(key);
-
     if (!userId) {
       res.status(401).send({ error: 'Unauthorized' });
       return;
     }
-    // retrieve user from db using user id
-    const user = await dbClient.db.collection('users')
-      .findOne({ _id: new ObjectId(userId) }); // convert userId(string) to ObjectId
-    if (!user) { // as precaution. (incase user_id is stored in redis but user not in db)
-      res.status(401).send({ error: 'Unauthorized' });
-      return;
-    }
+
     // get params from request body
     const {
       name, type, data, parentId,
@@ -90,7 +83,7 @@ class FilesController {
     if (type === 'folder') {
       const result = await dbClient.db.collection('files')
         .insertOne({ // use ObjectId type for userId
-          userId: user._id, name, type, isPublic, parentId: parentIdDb,
+          userId: new ObjectId(userId), name, type, isPublic, parentId: parentIdDb,
         });
 
       res.status(201).send({ // use string type for userId (check if isPublic should be returned)
@@ -107,7 +100,7 @@ class FilesController {
     // save the new file in db in files collection & return the new file
     const result = await dbClient.db.collection('files')
       .insertOne({
-        userId: user._id, name, type, isPublic, parentId: parentIdDb, localPath,
+        userId: new ObjectId(userId), name, type, isPublic, parentId: parentIdDb, localPath,
       });
 
     res.status(201).send({
@@ -132,15 +125,7 @@ class FilesController {
     const key = `auth_${token}`;
     // retrive user id from redis
     const userId = await redisClient.get(key);
-
     if (!userId) {
-      res.status(401).send({ error: 'Unauthorized' });
-      return;
-    }
-    // retrieve user from db using user id
-    const user = await dbClient.db.collection('users')
-      .findOne({ _id: new ObjectId(userId) }); // convert userId(string) to ObjectId
-    if (!user) { // as precaution. (incase user_id is stored in redis but user not in db)
       res.status(401).send({ error: 'Unauthorized' });
       return;
     }
@@ -152,12 +137,12 @@ class FilesController {
       return;
     }
     const document = await dbClient.db.collection('files')
-      .findOne({ _id: new ObjectId(documentId), userId: user._id });
+      .findOne({ _id: new ObjectId(documentId), userId: new ObjectId(userId) });
     if (!document) {
       res.status(404).send({ error: 'Not found' });
       return;
     }
-    console.log(document.localPath);
+
     // send document
     res.send({
       id: document._id.toString(),
@@ -186,22 +171,13 @@ class FilesController {
     const key = `auth_${token}`;
     // retrive user id from redis
     const userId = await redisClient.get(key);
-
     if (!userId) {
-      res.status(401).send({ error: 'Unauthorized' });
-      return;
-    }
-    // retrieve user from db using user id
-    const user = await dbClient.db.collection('users')
-      .findOne({ _id: new ObjectId(userId) }); // convert userId(string) to ObjectId
-    if (!user) { // as precaution. (incase user_id is stored in redis but user not in db)
       res.status(401).send({ error: 'Unauthorized' });
       return;
     }
 
     // retrieve document of given id linked to current user
     const parentId = req.query.parentId || '0';
-    // console.log(`\n\n====for parentId: ${parentId}, ${parentId.length} ====\n\n`);
     if (parentId !== '0' && parentId.length !== 24) { // ObjectId() Argument must be a string of 12 bytes
       res.send([]); // send empty list
       return;
@@ -209,16 +185,14 @@ class FilesController {
 
     // if parentId is given find users document in it. Else return from root (parentId = 0)
     let filter;
-    if (parentId === '0') filter = { userId: user._id, parentId };
-    else filter = { userId: user._id, parentId: new ObjectId(parentId) };
+    if (parentId === '0') filter = { userId: new ObjectId(userId), parentId };
+    else filter = { userId: new ObjectId(userId), parentId: new ObjectId(parentId) };
 
     // get page no from query string. each page contains 20 documents & page no. starts from 0.
     const page = req.params.page || 0;
     // create pipeline and aggregate
     const pipeline = [
-      {
-        $match: filter,
-      },
+      { $match: filter }, // match based on filter
       { $sort: { _id: 1 } }, // sort by id
       { $skip: parseInt(page, 10) * 20 }, // skip to page
       { $limit: 20 },
@@ -228,7 +202,6 @@ class FilesController {
     const aggCursor = dbClient.db.collection('files').aggregate(pipeline);
     const responseFiles = [];
     for await (const document of aggCursor) {
-      // console.log(document);
       responseFiles.push({
         id: document._id.toString(),
         userId: document.userId.toString(),
@@ -258,16 +231,9 @@ class FilesController {
     const key = `auth_${token}`;
     // retrive user id from redis
     const userId = await redisClient.get(key);
-
     if (!userId) {
       res.status(401).send({ error: 'Unauthorized' });
       return;
-    }
-    // retrieve user from db using user id
-    const user = await dbClient.db.collection('users')
-      .findOne({ _id: new ObjectId(userId) }); // convert userId(string) to ObjectId
-    if (!user) { // as precaution. (incase user_id is stored in redis but user not in db)
-      res.status(401).send({ error: 'Unauthorized' });
     }
 
     // retrieve document of given id linked to current user
@@ -276,11 +242,12 @@ class FilesController {
       res.status(404).send({ error: 'Not found' });
       return;
     }
+
     // publish doc by setting isPublic to true
     try {
       const response = await dbClient.db.collection('files')
         .findOneAndUpdate(
-          { _id: new ObjectId(documentId), userId: user._id },
+          { _id: new ObjectId(documentId), userId: new ObjectId(userId) },
           { $set: { isPublic: true } },
         );
       res.send({
@@ -313,16 +280,9 @@ class FilesController {
     const key = `auth_${token}`;
     // retrive user id from redis
     const userId = await redisClient.get(key);
-
     if (!userId) {
       res.status(401).send({ error: 'Unauthorized' });
       return;
-    }
-    // retrieve user from db using user id
-    const user = await dbClient.db.collection('users')
-      .findOne({ _id: new ObjectId(userId) }); // convert userId(string) to ObjectId
-    if (!user) { // as precaution. (incase user_id is stored in redis but user not in db)
-      res.status(401).send({ error: 'Unauthorized' });
     }
 
     // retrieve document of given id linked to current user
@@ -336,7 +296,7 @@ class FilesController {
     try {
       const response = await dbClient.db.collection('files')
         .findOneAndUpdate(
-          { _id: new ObjectId(documentId), userId: user._id },
+          { _id: new ObjectId(documentId), userId: new ObjectId(userId) },
           { $set: { isPublic: false } },
         );
       res.send({
@@ -392,15 +352,14 @@ class FilesController {
 
     // read data from file
     const data = await fsClient.readFile(document.localPath);
-
     // if document is not found at localPath return error
     if (data === null) {
       res.status(404).send({ error: 'Not found' });
       return;
     }
 
-    // Get Contet-Type (with mime tye and character set encoding) from file name
-    const contentType = mime.contentType(document.name);
+    // Get mime-type from file name
+    const contentType = mime.lookup(document.name);
     // set header and set data
     res.set('Content-type', contentType);
     res.send(data);
