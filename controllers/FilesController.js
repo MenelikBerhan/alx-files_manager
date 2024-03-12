@@ -164,6 +164,7 @@ class FilesController {
       type: document.type,
       isPublic: document.isPublic,
       parentId: document.parentId === '0' ? 0 : document.parentId.toString(),
+      localPath: document.localPath,
     });
   }
 
@@ -207,7 +208,7 @@ class FilesController {
 
     // if parentId is given find users document in it. Else return from root (parentId = 0)
     let filter;
-    if (parentId === '0') filter = { userId: user._id, parentId };
+    if (parentId === '0') filter = { userId: user._id };
     else filter = { userId: user._id, parentId: new ObjectId(parentId) };
 
     // get page no from query string. each page contains 20 documents & page no. starts from 0.
@@ -234,6 +235,7 @@ class FilesController {
         type: document.type,
         isPublic: document.isPublic,
         parentId: document.parentId === '0' ? 0 : document.parentId.toString(),
+        localPath: document.localPath,
       });
     }
     res.send(responseFiles);
