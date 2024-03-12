@@ -18,7 +18,7 @@ class FilesController {
 
   static async postUpload(req, res) {
     // get token from X-Token header in request
-    const token = req.get('X-Token');
+    const token = req.header('X-Token');
     if (!token) {
       res.status(401).send({ error: 'Unauthorized' });
       return;
@@ -33,12 +33,12 @@ class FilesController {
       return;
     }
     // retrieve user from db using user id
-    const user = await dbClient.db.collection('users')
-      .findOne({ _id: new ObjectId(userId) }); // convert userId(string) to ObjectId
-    if (!user) { // as precaution. (incase user_id is stored in redis but user not in db)
-      res.status(401).send({ error: 'Unauthorized' });
-      return;
-    }
+    // const user = await dbClient.db.collection('users')
+    //   .findOne({ _id: new ObjectId(userId) }); // convert userId(string) to ObjectId
+    // if (!user) { // as precaution. (incase user_id is stored in redis but user not in db)
+    //   res.status(401).send({ error: 'Unauthorized' });
+    //   return;
+    // }
     // get params from request body
     const {
       name, type, data, parentId,
@@ -54,17 +54,17 @@ class FilesController {
       res.status(400).send({ error: 'Missing type' });
       return;
     }
-    if (!(data || type === 'folder')) { // data required for file & image types
+    if (!data && type !== 'folder') { // data required for file & image types
       res.status(400).send({ error: 'Missing data' });
       return;
     }
 
     // if parentId is given, check if it exists and is of type folder
     if (parentId) {
-      if (parentId.length !== 24) { // ObjectId Argument must be a string of 12 bytes
-        res.status(400).send({ error: 'Parent not found' });
-        return;
-      }
+      // if (parentId.length !== 24) { // ObjectId Argument must be a string of 12 bytes
+      //   res.status(400).send({ error: 'Parent not found' });
+      //   return;
+      // }
 
       const parentFile = await dbClient.db.collection('files')
         .findOne({ _id: new ObjectId(parentId) });
@@ -89,7 +89,7 @@ class FilesController {
     if (type === 'folder') {
       const result = await dbClient.db.collection('files')
         .insertOne({ // use ObjectId type for userId
-          userId: user._id, name, type, isPublic, parentId: parentIdDb,
+          userId: Object(userId), name, type, isPublic, parentId: parentIdDb,
         });
 
       res.status(201).send({ // use string type for userId (check if isPublic should be returned)
@@ -106,7 +106,7 @@ class FilesController {
     // save the new file in db in files collection & return the new file
     const result = await dbClient.db.collection('files')
       .insertOne({
-        userId: user._id, name, type, isPublic, parentId: parentIdDb, localPath,
+        userId: Object(userId), name, type, isPublic, parentId: parentIdDb, localPath,
       });
 
     res.status(201).send({
@@ -122,7 +122,7 @@ class FilesController {
    */
   static async getShow(req, res) {
     // get token from X-Token header in request
-    const token = req.get('X-Token');
+    const token = req.header('X-Token');
     if (!token) {
       res.status(401).send({ error: 'Unauthorized' });
       return;
@@ -176,7 +176,7 @@ class FilesController {
    */
   static async getIndex(req, res) {
     // get token from X-Token header in request
-    const token = req.get('X-Token');
+    const token = req.header('X-Token');
     if (!token) {
       res.status(401).send({ error: 'Unauthorized' });
       return;
