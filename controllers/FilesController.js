@@ -2,7 +2,7 @@
 import { v4 as uuidv4 } from 'uuid';
 import { ObjectId } from 'mongodb';
 import mime from 'mime-types';
-import path from 'path';
+// import path from 'path';
 import dbClient from '../utils/db';
 // import fsClient from '../utils/fs';
 import redisClient from '../utils/redis';
@@ -112,12 +112,13 @@ class FilesController {
       }
     } catch (err) {
       if (['ENOENT', 'ENOTDIR'].includes(err.code)) {
-        await fs.mkdir(this.storagePath, { recursive: true })
+        await fs.mkdir(storagePath, { recursive: true })
           .then(() => console.log(`Created storage dir ${this.storagePath}`));
       } else throw err; // rethrow err if it is not handled above
     }
     // append file name to storage path and get absolute path
-    const localPath = await fs.realpath(path.join(storagePath, fileName));
+    // const localPath = await fs.realpath(path.join(storagePath, fileName));
+    const localPath = `${storagePath}/${fileName}`;
 
     // write file
     await fs.writeFile(localPath, Buffer.from(data, 'base64'));
