@@ -137,21 +137,21 @@ class FilesController {
       return;
     }
     // retrieve user from db using user id
-    const user = await dbClient.db.collection('users')
-      .findOne({ _id: new ObjectId(userId) }); // convert userId(string) to ObjectId
-    if (!user) { // as precaution. (incase user_id is stored in redis but user not in db)
-      res.status(401).send({ error: 'Unauthorized' });
-      return;
-    }
+    // const user = await dbClient.db.collection('users')
+    //   .findOne({ _id: new ObjectId(userId) }); // convert userId(string) to ObjectId
+    // if (!user) { // as precaution. (incase user_id is stored in redis but user not in db)
+    //   res.status(401).send({ error: 'Unauthorized' });
+    //   return;
+    // }
 
     // retrieve document of given id linked to current user
     const documentId = req.params.id;
-    if (documentId.length !== 24) { // ObjectId Argument must be a string of 12 bytes
-      res.status(404).send({ error: 'Not found' });
-      return;
-    }
+    // if (documentId.length !== 24) { // ObjectId Argument must be a string of 12 bytes
+    //   res.status(404).send({ error: 'Not found' });
+    //   return;
+    // }
     const document = await dbClient.db.collection('files')
-      .findOne({ _id: new ObjectId(documentId), userId: user._id });
+      .findOne({ _id: ObjectId(documentId), userId: ObjectId(userId) });
     if (!document) {
       res.status(404).send({ error: 'Not found' });
       return;
@@ -191,25 +191,25 @@ class FilesController {
       return;
     }
     // retrieve user from db using user id
-    const user = await dbClient.db.collection('users')
-      .findOne({ _id: new ObjectId(userId) }); // convert userId(string) to ObjectId
-    if (!user) { // as precaution. (incase user_id is stored in redis but user not in db)
-      res.status(401).send({ error: 'Unauthorized' });
-      return;
-    }
+    // const user = await dbClient.db.collection('users')
+    //   .findOne({ _id: new ObjectId(userId) }); // convert userId(string) to ObjectId
+    // if (!user) { // as precaution. (incase user_id is stored in redis but user not in db)
+    //   res.status(401).send({ error: 'Unauthorized' });
+    //   return;
+    // }
 
     // retrieve document of given id linked to current user
     const parentId = req.query.parentId || '0';
     // console.log(`\n\n====for parentId: ${parentId}, ${parentId.length} ====\n\n`);
-    if (parentId !== '0' && parentId.length !== 24) { // ObjectId() Argument must be a string of 12 bytes
-      res.send([]); // send empty list
-      return;
-    }
+    // if (parentId !== '0' && parentId.length !== 24) { // ObjectId() Argument must be  12 bytes
+    //   res.send([]); // send empty list
+    //   return;
+    // }
 
     // if parentId is given find users document in it. Else return from root (parentId = 0)
     let filter;
-    if (parentId === '0') filter = { userId: user._id };
-    else filter = { userId: user._id, parentId: new ObjectId(parentId) };
+    if (parentId === '0') filter = { userId: ObjectId(userId) };
+    else filter = { userId: ObjectId(userId), parentId: ObjectId(parentId) };
 
     // get page no from query string. each page contains 20 documents & page no. starts from 0.
     const page = req.params.page || 0;
