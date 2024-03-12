@@ -114,8 +114,7 @@ class FilesController {
       if (['ENOENT', 'ENOTDIR'].includes(err.code)) {
         await fs.mkdir(this.storagePath, { recursive: true })
           .then(() => console.log(`Created storage dir ${this.storagePath}`));
-      }
-      throw err; // rethrow err if it is not handled above
+      } else throw err; // rethrow err if it is not handled above
     }
     // append file name to storage path and get absolute path
     const localPath = await fs.realpath(path.join(storagePath, fileName));
