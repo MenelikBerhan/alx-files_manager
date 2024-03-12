@@ -221,8 +221,8 @@ class FilesController {
       return;
     }
     const key = `auth_${token}`;
-    const user = await redisClient.get(key);
-    if (!user) {
+    const userId = await redisClient.get(key);
+    if (!userId) {
       res.status(401).send({ error: 'Unauthorized' });
       return;
     }
@@ -230,10 +230,10 @@ class FilesController {
     const files = dbClient.db.collection('files');
     let query;
     if (!parentId) {
-      query = { userId: ObjectId(user) };
+      query = { userId: ObjectId(userId) };
     // query = { userId: user };
     } else {
-      query = { parentId: ObjectId(parentId), userId: ObjectId(user) };
+      query = { parentId: new ObjectId(parentId), userId: new ObjectId(userId) };
     }
     const result = await files.aggregate([
       { $match: query },
