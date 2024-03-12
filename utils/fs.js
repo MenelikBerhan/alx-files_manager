@@ -71,9 +71,10 @@ class FileSystemClient {
    * @param {String} fileName
    * @returns {Promise<Buffer>} Fulfills with a Buffer of the contents of the file.
    */
-  async readFile(fileName) {
+  // eslint-disable-next-line class-methods-use-this
+  async readFile(filePath) {
     // append file name to storage path
-    const filePath = path.join(this.storagePath, fileName);
+    // const filePath = path.join(this.storagePath, fileName);
     //
     return fs.readFile(filePath);
   }
