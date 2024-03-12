@@ -13,7 +13,7 @@ class DBClient {
     const url = `mongodb://${host}:${port}`;
 
     // create mongodb client instance
-    this.client = new MongoClient(url);
+    this.client = new MongoClient(url, { useUnifiedTopology: true });
 
     // connect to mongodb. If successful create db.
     this.client.connect()
