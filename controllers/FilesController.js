@@ -233,7 +233,7 @@ class FilesController {
         parentId: document.parentId === '0' ? 0 : document.parentId.toString(),
       });
     }
-    res.status(200).json(responseFiles);
+    res.send(responseFiles);
   }
 }
 
