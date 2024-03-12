@@ -176,9 +176,9 @@ class FilesController {
     }
 
     // get parentId & page query params
-    const { parentId, page = 0 } = req.query;
+    const { parentId = '0', page = 0 } = req.query;
 
-    if (parentId && parentId !== '0' && parentId.length !== 24) {
+    if (parentId !== '0' && parentId.length !== 24) {
       // ObjectId Argument must be a string of 24 hex chars
       res.send([]); // send empty list
       return;
@@ -186,7 +186,7 @@ class FilesController {
 
     // if parentId is given find users document in it. Else return from root (parentId = 0)
     let filter;
-    if (!parentId) filter = { userId: new ObjectId(userId) };
+    if (parentId === '0') filter = { userId: new ObjectId(userId), parentId };
     else filter = { parentId: new ObjectId(parentId), userId: new ObjectId(userId) };
 
     // create a pipe line for aggreagate with pagination.
