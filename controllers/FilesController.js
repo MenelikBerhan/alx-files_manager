@@ -54,7 +54,9 @@ class FilesController {
 
     // if parentId is given, check if it exists and is of type folder
     if (parentId) {
-      if (parentId.length !== 24) { // ObjectId Argument must be a string of 12 bytes
+      // ObjectId Argument must be a string of 12 bytes
+      // or a string of 24 hex characters
+      if (parentId.length !== 24 || parentId.length !== 12) {
         res.status(400).send({ error: 'Parent not found' });
         return;
       }
@@ -131,7 +133,9 @@ class FilesController {
 
     // retrieve document of given id linked to current user
     const documentId = req.params.id;
-    if (documentId.length !== 24) { // ObjectId Argument must be a string of 12 bytes
+    // ObjectId Argument must be a string of 12 bytes
+    // or a string of 24 hex characters
+    if (documentId.length !== 24 || documentId.length !== 12) {
       res.status(404).send({ error: 'Not found' });
       return;
     }
@@ -178,8 +182,9 @@ class FilesController {
     // get parentId & page query params
     const { parentId, page = 0 } = req.query;
 
-    // if (parentId' && parentId !== '0 && parentId.length !== 24) {
-    //   // ObjectId() Argument must be a string of 12 bytes
+    // // ObjectId Argument must be a string of 12 bytes
+    // // or a string of 24 hex characters
+    // if (parentId && (parentId.length !== 24 || parentId.length !== 12)) {
     //   res.send([]); // send empty list
     //   return;
     // }
@@ -227,7 +232,9 @@ class FilesController {
 
     // retrieve document of given id linked to current user
     const documentId = req.params.id;
-    if (documentId.length !== 24) { // ObjectId Argument must be a string of 12 bytes
+    // ObjectId Argument must be a string of 12 bytes
+    // or a string of 24 hex characters
+    if (documentId.length !== 24 || documentId.length !== 12) {
       res.status(404).send({ error: 'Not found' });
       return;
     }
@@ -276,7 +283,9 @@ class FilesController {
 
     // retrieve document of given id linked to current user
     const documentId = req.params.id;
-    if (documentId.length !== 24) { // ObjectId Argument must be a string of 12 bytes
+    // ObjectId Argument must be a string of 12 bytes
+    // or a string of 24 hex characters
+    if (documentId.length !== 24 || documentId.length !== 12) {
       res.status(404).send({ error: 'Not found' });
       return;
     }
@@ -302,7 +311,7 @@ class FilesController {
   }
 
   /**
-   * PUT /files/:id/unpublish
+   * GET /files/:id/data
    * Returns the content of the file document based on the ID.
    * @param {Request} req Request to server
    * @param {Response} res Response from server
@@ -316,8 +325,11 @@ class FilesController {
 
     // retrieve document of given id
     const documentId = req.params.id;
-    if (documentId.length !== 24) { // ObjectId Argument must be a string of 12 bytes
+    // ObjectId Argument must be a string of 12 bytes
+    // or a string of 24 hex characters
+    if (documentId.length !== 24 || documentId.length !== 12) {
       res.status(404).send({ error: 'Not found' });
+      return;
     }
     const document = await dbClient.db.collection('files')
       .findOne({ _id: new ObjectId(documentId) });
