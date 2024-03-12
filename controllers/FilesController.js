@@ -153,6 +153,26 @@ class FilesController {
     });
   }
 
+  // static async getShow(req, res) {
+  //   const token = req.header('X-Token');
+  //   const key = `auth_${token}`;
+  //   const userId = await redisClient.get(key);
+  //   if (!userId) {
+  //     res.status(401).json({ error: 'Unauthorized' });
+  //     return;
+  //   }
+  //   const { id } = req.params;
+  //   const files = dbClient.db.collection('files');
+  //   const objectId = new ObjectId(id);
+  //   const objectId2 = new ObjectId(userId);
+  //   const file = await files.findOne({ _id: objectId, userId: objectId2 });
+  //   if (!file) {
+  //     res.status(404).json({ error: 'Not found' });
+  //     return;
+  //   }
+  //   res.status(200).json(file);
+  // }
+
   // /**
   //  * GET /files
   //  * Retrieves all users file documents for a specific parentId and with pagination.
@@ -214,26 +234,6 @@ class FilesController {
   //   res.send(responseFiles);
   // }
 
-  // static async getShow(req, res) {
-  //   const token = req.header('X-Token');
-  //   const key = `auth_${token}`;
-  //   const userId = await redisClient.get(key);
-  //   if (!userId) {
-  //     res.status(401).json({ error: 'Unauthorized' });
-  //     return;
-  //   }
-  //   const { id } = req.params;
-  //   const files = dbClient.db.collection('files');
-  //   const objectId = new ObjectId(id);
-  //   const objectId2 = new ObjectId(userId);
-  //   const file = await files.findOne({ _id: objectId, userId: objectId2 });
-  //   if (!file) {
-  //     res.status(404).json({ error: 'Not found' });
-  //     return;
-  //   }
-  //   res.status(200).json(file);
-  // }
-
   static async getIndex(req, res) {
     const token = req.header('X-Token');
     const key = `auth_${token}`;
@@ -257,7 +257,15 @@ class FilesController {
       { $skip: parseInt(page, 10) * 20 },
       { $limit: 20 },
     ]).toArray();
-    const newArr = result.map(({ _id, ...rest }) => ({ id: _id, ...rest }));
+    const newArr = result.map((document) => ({
+      id: document._id.toString(),
+      userId: document.userId.toString(),
+      name: document.name,
+      type: document.type,
+      isPublic: document.isPublic,
+      parentId: document.parentId === '0' ? 0 : document.parentId.toString(),
+
+    }));
     res.status(200).json(newArr);
   }
 
