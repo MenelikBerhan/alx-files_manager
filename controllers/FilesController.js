@@ -207,7 +207,7 @@ class FilesController {
 
     // if parentId is given find users document in it. Else return from root (parentId = 0)
     let filter;
-    if (parentId === '0') filter = { userId: user._id, parentId };
+    if (parentId === '0') filter = { userId: user._id };
     else filter = { userId: user._id, parentId: new ObjectId(parentId) };
 
     // get page no from query string. each page contains 20 documents & page no. starts from 0.
@@ -223,9 +223,9 @@ class FilesController {
     ];
 
     // send list of documents
-    const docments = dbClient.db.collection('files').aggregate(pipeline).toArray();
+    const aggCursor = dbClient.db.collection('files').aggregate(pipeline);
     const responseFiles = [];
-    for (const document of docments) {
+    for await (const document of aggCursor) {
       // console.log(document);
       responseFiles.push({
         id: document._id.toString(),
