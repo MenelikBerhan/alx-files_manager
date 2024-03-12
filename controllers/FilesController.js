@@ -312,7 +312,7 @@ class FilesController {
   }
 
   /**
-   * PUT /files/:id/unpublish
+   * PUT /files/:id/data
    * Returns the content of the file document based on the ID.
    * @param {Request} req Request to server
    * @param {Response} res Response from server
@@ -348,8 +348,21 @@ class FilesController {
       return;
     }
 
+    // local path of file
+    let { localPath } = document;
+
+    const { size } = req.query; // Image width. for images only.
+    // if file type is image, check if valid size parameter is given: [500, 250, 100]
+    if (size && document.type === 'image') {
+      if (['500', '250', '100'].includes(size)) { // add _<size> suffix to localPath
+        localPath += `_${size}`;
+      } else { // retrun error
+        res.status(404).send({ error: 'Not found' });
+        return;
+      }
+    }
     // read data from file
-    const data = await fsClient.readFile(document.localPath);
+    const data = await fsClient.readFile(localPath);
     // if document is not found at localPath return error
     if (data === null) {
       res.status(404).send({ error: 'Not found' });
