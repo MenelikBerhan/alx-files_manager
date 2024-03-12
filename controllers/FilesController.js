@@ -157,14 +157,15 @@ class FilesController {
       return;
     }
     // send document
-    res.send({
-      id: document._id.toString(),
-      userId: document.userId.toString(),
-      name: document.name,
-      type: document.type,
-      isPublic: document.isPublic,
-      parentId: document.parentId === '0' ? 0 : document.parentId.toString(),
-    });
+    res.send(document);
+    // res.send({
+    //   id: document._id.toString(),
+    //   userId: document.userId.toString(),
+    //   name: document.name,
+    //   type: document.type,
+    //   isPublic: document.isPublic,
+    //   parentId: document.parentId === '0' ? 0 : document.parentId.toString(),
+    // });
   }
 
   /**
