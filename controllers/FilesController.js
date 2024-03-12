@@ -165,75 +165,101 @@ class FilesController {
     });
   }
 
-  /**
-   * Retrieves all users file documents for a specific parentId and with pagination.
-   * @param {Request} req Request to server
-   * @param {Response} res Response from server
-   */
+  // /**
+  //  * Retrieves all users file documents for a specific parentId and with pagination.
+  //  * @param {Request} req Request to server
+  //  * @param {Response} res Response from server
+  //  */
+  // static async getIndex(req, res) {
+  //   // get token from X-Token header in request
+  //   const token = req.get('X-Token');
+  //   if (!token) {
+  //     res.status(401).send({ error: 'Unauthorized' });
+  //     return;
+  //   }
+
+  //   const key = `auth_${token}`;
+  //   // retrive user id from redis
+  //   const userId = await redisClient.get(key);
+
+  //   if (!userId) {
+  //     res.status(401).send({ error: 'Unauthorized' });
+  //     return;
+  //   }
+  //   // retrieve user from db using user id
+  //   const user = await dbClient.db.collection('users')
+  //     .findOne({ _id: new ObjectId(userId) }); // convert userId(string) to ObjectId
+  //   if (!user) { // as precaution. (incase user_id is stored in redis but user not in db)
+  //     res.status(401).send({ error: 'Unauthorized' });
+  //     return;
+  //   }
+
+  //   // retrieve document of given id linked to current user
+  //   const parentId = req.query.parentId || '0';
+  //   // console.log(`\n\n====for parentId: ${parentId}, ${parentId.length} ====\n\n`);
+  //   if (parentId !== '0' && parentId.length !== 24) { // ObjectId() Argument must be a string of 12 bytes
+  //     res.send([]); // send empty list
+  //     return;
+  //   }
+
+  //   // if parentId is given find users document in it. Else return from root (parentId = 0)
+  //   let filter;
+  //   if (parentId === '0') filter = { userId: user._id };
+  //   else filter = { userId: user._id, parentId: new ObjectId(parentId) };
+
+  //   // get page no from query string. each page contains 20 documents & page no. starts from 0.
+  //   const page = req.params.page || 0;
+  //   // create pipeline and aggregate
+  //   const pipeline = [
+  //     {
+  //       $match: filter,
+  //     },
+  //     // { $sort: { _id: 1 } }, // sort by id
+  //     { $skip: parseInt(page, 10) * 20 }, // skip to page
+  //     { $limit: 20 },
+  //   ];
+
+  //   // send list of documents
+  //   const aggCursor = dbClient.db.collection('files').aggregate(pipeline);
+  //   const responseFiles = [];
+  //   for await (const document of aggCursor) {
+  //     // console.log(document);
+  //     responseFiles.push({
+  //       id: document._id.toString(),
+  //       userId: document.userId.toString(),
+  //       name: document.name,
+  //       type: document.type,
+  //       isPublic: document.isPublic,
+  //       parentId: document.parentId === '0' ? 0 : document.parentId.toString(),
+  //     });
+  //   }
+  //   res.status(200).json(responseFiles);
+  // }
   static async getIndex(req, res) {
-    // get token from X-Token header in request
-    const token = req.get('X-Token');
-    if (!token) {
-      res.status(401).send({ error: 'Unauthorized' });
-      return;
-    }
-
+    const token = req.header('X-Token');
     const key = `auth_${token}`;
-    // retrive user id from redis
-    const userId = await redisClient.get(key);
-
-    if (!userId) {
-      res.status(401).send({ error: 'Unauthorized' });
+    const user = await redisClient.get(key);
+    if (!user) {
+      res.status(401).json({ error: 'Unauthorized' });
       return;
     }
-    // retrieve user from db using user id
-    const user = await dbClient.db.collection('users')
-      .findOne({ _id: new ObjectId(userId) }); // convert userId(string) to ObjectId
-    if (!user) { // as precaution. (incase user_id is stored in redis but user not in db)
-      res.status(401).send({ error: 'Unauthorized' });
-      return;
+    const { parentId, page = 0 } = req.query;
+    const files = dbClient.db.collection('files');
+    let query;
+    if (!parentId) {
+      query = { userId: ObjectID(user) };
+      // query = { userId: user };
+    } else {
+      query = { parentId: ObjectID(parentId), userId: ObjectID(user) };
     }
-
-    // retrieve document of given id linked to current user
-    const parentId = req.query.parentId || '0';
-    // console.log(`\n\n====for parentId: ${parentId}, ${parentId.length} ====\n\n`);
-    if (parentId !== '0' && parentId.length !== 24) { // ObjectId() Argument must be a string of 12 bytes
-      res.send([]); // send empty list
-      return;
-    }
-
-    // if parentId is given find users document in it. Else return from root (parentId = 0)
-    let filter;
-    if (parentId === '0') filter = { userId: user._id };
-    else filter = { userId: user._id, parentId: new ObjectId(parentId) };
-
-    // get page no from query string. each page contains 20 documents & page no. starts from 0.
-    const page = req.params.page || 0;
-    // create pipeline and aggregate
-    const pipeline = [
-      {
-        $match: filter,
-      },
-      // { $sort: { _id: 1 } }, // sort by id
-      { $skip: parseInt(page, 10) * 20 }, // skip to page
+    console.log(query);
+    const result = await files.aggregate([
+      { $match: query },
+      { $skip: parseInt(page, 10) * 20 },
       { $limit: 20 },
-    ];
-
-    // send list of documents
-    const aggCursor = dbClient.db.collection('files').aggregate(pipeline);
-    const responseFiles = [];
-    for await (const document of aggCursor) {
-      // console.log(document);
-      responseFiles.push({
-        id: document._id.toString(),
-        userId: document.userId.toString(),
-        name: document.name,
-        type: document.type,
-        isPublic: document.isPublic,
-        parentId: document.parentId === '0' ? 0 : document.parentId.toString(),
-      });
-    }
-    res.status(200).json(responseFiles);
+    ]).toArray();
+    const newArr = result.map(({ _id, ...rest }) => ({ id: _id, ...rest }));
+    res.status(200).json(newArr);
   }
 }
 
