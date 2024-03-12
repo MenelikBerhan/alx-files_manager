@@ -228,20 +228,24 @@ class FilesController {
     }
     const { parentId, page = 0 } = req.query;
     const files = dbClient.db.collection('files');
-    let query;
+    let filter;
     if (!parentId) {
-      query = { userId: ObjectId(userId) };
-    // query = { userId: user };
+      filter = { userId: new ObjectId(userId) };
     } else {
-      query = { parentId: new ObjectId(parentId), userId: new ObjectId(userId) };
+      filter = { parentId: new ObjectId(parentId), userId: new ObjectId(userId) };
     }
-    const result = await files.aggregate([
-      { $match: query },
+    const pipeline = [
+      { $match: filter },
       { $skip: parseInt(page, 10) * 20 },
       { $limit: 20 },
-    ]).toArray();
-    const newArr = result.map(({ _id, ...rest }) => ({ id: _id, ...rest }));
-    res.status(200).send(newArr);
+    ];
+    const aggCursor = await files.aggregate(pipeline);
+    const responseFiles = [];
+    for await (const document of aggCursor) {
+      responseFiles.push(document.map(({ _id, ...rest }) => ({ id: _id, ...rest })));
+    }
+    // const newArr = result.map(({ _id, ...rest }) => ({ id: _id, ...rest }));
+    res.status(200).send(responseFiles);
   }
 
   /**
