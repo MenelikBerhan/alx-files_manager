@@ -178,11 +178,11 @@ class FilesController {
     // get parentId & page query params
     const { parentId, page = 0 } = req.query;
 
-    // if (parentId' && parentId !== '0 && parentId.length !== 24) {
-    //   // ObjectId Argument must be a string of 24 hex chars
-    //   res.send([]); // send empty list
-    //   return;
-    // }
+    if (parentId && parentId !== '0' && parentId.length !== 24) {
+      // ObjectId Argument must be a string of 24 hex chars
+      res.send([]); // send empty list
+      return;
+    }
 
     // if parentId is given find users document in it. Else return from root (parentId = 0)
     let filter;
@@ -199,8 +199,8 @@ class FilesController {
 
     // after getting list of docs from db send list of documents
     const result = await dbClient.db.collection('files').aggregate(pipeline).toArray();
-    const newArr = result.map(({ _id, ...attrs }) => ({ id: _id, ...attrs }));
-    res.status(200).send(newArr);
+    const responseDocuments = result.map(({ _id, ...attrs }) => ({ id: _id, ...attrs }));
+    res.status(200).send(responseDocuments);
   }
 
   /**
