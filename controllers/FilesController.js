@@ -10,6 +10,7 @@ import redisClient from '../utils/redis';
  */
 class FilesController {
   /**
+   * POST /files
    * Creates a new file in DB and in local disk.
    * @param {Request} req Request to server
    * @param {Response} res Response from server
@@ -114,6 +115,7 @@ class FilesController {
   }
 
   /**
+   * GET /files/:id
    * Retrieves requesting user's file documents based on the ID.
    * @param {Request} req Request to server
    * @param {Response} res Response from server
@@ -166,6 +168,7 @@ class FilesController {
   }
 
   /**
+   * GET /files
    * Retrieves all users file documents for a specific parentId and with pagination.
    * @param {Request} req Request to server
    * @param {Response} res Response from server
@@ -234,6 +237,117 @@ class FilesController {
       });
     }
     res.send(responseFiles);
+  }
+
+  /**
+   * PUT /files/:id/publish
+   * Set isPublic to true on the file document based on the ID.
+   * @param {Request} req Request to server
+   * @param {Response} res Response from server
+   */
+  static async putPublish(req, res) {
+    // get token from X-Token header in request
+    const token = req.get('X-Token');
+    if (!token) {
+      res.status(401).send({ error: 'Unauthorized' });
+      return;
+    }
+
+    const key = `auth_${token}`;
+    // retrive user id from redis
+    const userId = await redisClient.get(key);
+
+    if (!userId) {
+      res.status(401).send({ error: 'Unauthorized' });
+      return;
+    }
+    // retrieve user from db using user id
+    const user = await dbClient.db.collection('users')
+      .findOne({ _id: new ObjectId(userId) }); // convert userId(string) to ObjectId
+    if (!user) { // as precaution. (incase user_id is stored in redis but user not in db)
+      res.status(401).send({ error: 'Unauthorized' });
+    }
+
+    // retrieve document of given id linked to current user
+    const documentId = req.params.id;
+    if (documentId.length !== 24) { // ObjectId Argument must be a string of 12 bytes
+      res.status(404).send({ error: 'Not found' });
+      return;
+    }
+    // publish doc by setting isPublic to true
+    try {
+      const response = await dbClient.db.collection('files')
+        .findOneAndUpdate(
+          { _id: new ObjectId(documentId), userId: user._id },
+          { $set: { isPublic: true } },
+        );
+      res.send({
+        id: response.value._id,
+        userId: response.value.userId,
+        name: response.value.name,
+        type: response.value.type,
+        isPublic: true,
+        parentId: response.value.parentId,
+      });
+    } catch (e) {
+      res.status(404).send({ error: 'Not found' });
+    }
+  }
+
+  /**
+   * PUT /files/:id/unpublish
+   * Set isPublic to false on the file document based on the ID.
+   * @param {Request} req Request to server
+   * @param {Response} res Response from server
+   */
+  static async putUnpublish(req, res) {
+    // get token from X-Token header in request
+    const token = req.get('X-Token');
+    if (!token) {
+      res.status(401).send({ error: 'Unauthorized' });
+      return;
+    }
+
+    const key = `auth_${token}`;
+    // retrive user id from redis
+    const userId = await redisClient.get(key);
+
+    if (!userId) {
+      res.status(401).send({ error: 'Unauthorized' });
+      return;
+    }
+    // retrieve user from db using user id
+    const user = await dbClient.db.collection('users')
+      .findOne({ _id: new ObjectId(userId) }); // convert userId(string) to ObjectId
+    if (!user) { // as precaution. (incase user_id is stored in redis but user not in db)
+      res.status(401).send({ error: 'Unauthorized' });
+    }
+
+    // retrieve document of given id linked to current user
+    const documentId = req.params.id;
+    if (documentId.length !== 24) { // ObjectId Argument must be a string of 12 bytes
+      res.status(404).send({ error: 'Not found' });
+      return;
+    }
+
+    // unpublish doc by setting isPublic to false
+    try {
+      const response = await dbClient.db.collection('files')
+        .findOneAndUpdate(
+          { _id: new ObjectId(documentId), userId: user._id },
+          { $set: { isPublic: false } },
+        );
+      res.send({
+        id: response.value._id,
+        userId: response.value.userId,
+        name: response.value.name,
+        type: response.value.type,
+        isPublic: false,
+        parentId: response.value.parentId,
+      });
+    } catch (e) {
+      res.status(404).send({ error: 'Not found' });
+    }
   }
 }
 
