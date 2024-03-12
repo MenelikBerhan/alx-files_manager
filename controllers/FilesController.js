@@ -320,7 +320,6 @@ class FilesController {
    */
   static async getFile(req, res) {
     // get token from X-Token header in request
-    console.log('hereeee');
     const token = req.get('X-Token');
     const key = `auth_${token}`;
     // retrive user id from redis
@@ -346,7 +345,7 @@ class FilesController {
 
     // if document type is a folder return error
     if (document.type === 'folder') {
-      res.status(404).send({ error: "A folder doesn't have content" });
+      res.status(400).send({ error: "A folder doesn't have content" });
       return;
     }
 
