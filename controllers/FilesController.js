@@ -214,51 +214,32 @@ class FilesController {
   //   res.send(responseFiles);
   // }
 
-  /**
-   * GET /files
-   * Retrieves all users file documents for a specific parentId and with pagination.
-   * @param {Request} req Request to server
-   * @param {Response} res Response from server
-   */
   static async getIndex(req, res) {
-    // get token from X-Token header in request
-    const token = req.get('X-Token');
+    const token = req.header('X-Token');
     if (!token) {
       res.status(401).send({ error: 'Unauthorized' });
       return;
     }
-
     const key = `auth_${token}`;
-    // retrive user id from redis
     const userId = await redisClient.get(key);
     if (!userId) {
       res.status(401).send({ error: 'Unauthorized' });
       return;
     }
-
-    // retrieve document of given id linked to current user
-    const parentId = req.query.parentId || '0';
-    // if (parentId !== '0' && parentId.length !== 24) {
-    //   // ObjectId() Argument must be a string of 12 bytes
-    //   res.send([]); // send empty list
-    //   return;
-    // }
-
-    // if parentId is given find users document in it. Else return from root (parentId = 0)
-    let filter;
-    if (parentId === '0') filter = { userId: new ObjectId(userId) };
-    else filter = { userId: new ObjectId(userId), parentId: new ObjectId(parentId) };
-
-    // get page no from query string. each page contains 20 documents & page no. starts from 0.
-    const page = req.params.page || 0;
-    // create pipeline and aggregate
-    const pipeline = [
-      { $match: filter }, // match based on filter
-      // { $sort: { _id: 1 } }, // sort by id
-      { $skip: parseInt(page, 10) * 20 }, // skip to page
+    const { parentId, page = 0 } = req.query;
+    const files = dbClient.db.collection('files');
+    let query;
+    if (!parentId) {
+      query = { userId: new ObjectId(userId) };
+    // query = { userId: user };
+    } else {
+      query = { parentId: new ObjectId(parentId), userId: new ObjectId(userId) };
+    }
+    const result = await files.aggregate([
+      { $match: query },
+      { $skip: parseInt(page, 10) * 20 },
       { $limit: 20 },
-    ];
-    const result = await dbClient.db.collection('files').aggregate(pipeline).toArray();
+    ]).toArray();
     const newArr = result.map(({ _id, ...rest }) => ({ id: _id, ...rest }));
     res.status(200).send(newArr);
   }
