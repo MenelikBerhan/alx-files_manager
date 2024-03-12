@@ -157,15 +157,14 @@ class FilesController {
       return;
     }
     // send document
-    res.send(document);
-    // res.send({
-    //   id: document._id.toString(),
-    //   userId: document.userId.toString(),
-    //   name: document.name,
-    //   type: document.type,
-    //   isPublic: document.isPublic,
-    //   parentId: document.parentId === '0' ? 0 : document.parentId.toString(),
-    // });
+    res.send({
+      id: document._id.toString(),
+      userId: document.userId.toString(),
+      name: document.name,
+      type: document.type,
+      isPublic: document.isPublic,
+      parentId: document.parentId === '0' ? 0 : document.parentId.toString(),
+    });
   }
 
   /**
@@ -224,9 +223,9 @@ class FilesController {
     ];
 
     // send list of documents
-    const aggCursor = dbClient.db.collection('files').aggregate(pipeline);
+    const docments = dbClient.db.collection('files').aggregate(pipeline).toArray();
     const responseFiles = [];
-    for await (const document of aggCursor) {
+    for (const document of docments) {
       // console.log(document);
       responseFiles.push({
         id: document._id.toString(),
