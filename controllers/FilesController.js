@@ -6,6 +6,11 @@ import dbClient from '../utils/db';
 import fsClient from '../utils/fs';
 import redisClient from '../utils/redis';
 
+const Bull = require('bull');
+// create a queue named fileQueue to handle
+// creating thumbnails for image files (using worker.js)
+const fileQueue = new Bull('fileQueue');
+
 /**
  * Handles `/files` endpoint.
  */
@@ -101,6 +106,11 @@ class FilesController {
       .insertOne({
         userId: new ObjectId(userId), name, type, isPublic, parentId: parentIdDb, localPath,
       });
+
+    // add job to a Bull queue if file type is image to create thumbnails
+    if (type === 'image') {
+      fileQueue.add({ fileId: result.insertedId, userId });
+    }
 
     res.status(201).send({
       id: result.insertedId, userId, name, type, isPublic, parentId: parentIdResponse,
