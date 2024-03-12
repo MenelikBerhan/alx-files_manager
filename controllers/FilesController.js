@@ -2,9 +2,12 @@
 import { v4 as uuidv4 } from 'uuid';
 import { ObjectId } from 'mongodb';
 import mime from 'mime-types';
+import path from 'path';
 import dbClient from '../utils/db';
-import fsClient from '../utils/fs';
+// import fsClient from '../utils/fs';
 import redisClient from '../utils/redis';
+
+const fs = require('fs').promises;
 
 /**
  * Handles `/files` endpoint.
@@ -95,7 +98,30 @@ class FilesController {
     // generate random file name
     const fileName = uuidv4();
     // save data to file in local storage, and get the absolute path
-    const localPath = await fsClient.writeFile(fileName, data);
+    // const localPath = await fsClient.writeFile(fileName, data);
+
+    // get storage path from env, if absent use default
+    const storagePath = process.env.FOLDER_PATH || '/tmp/files_manager';
+    // if storage path doesn't exist create one
+    try {
+      const stat = await fs.stat();
+      if (!(stat.isDirectory())) {
+        const err = new Error('Not a direcotory');
+        err.code = 'ENOTDIR'; // not a directory
+        throw err;
+      }
+    } catch (err) {
+      if (['ENOENT', 'ENOTDIR'].includes(err.code)) {
+        await fs.mkdir(this.storagePath, { recursive: true })
+          .then(() => console.log(`Created storage dir ${this.storagePath}`));
+      }
+      throw err; // rethrow err if it is not handled above
+    }
+    // append file name to storage path and get absolute path
+    const localPath = await fs.realpath(path.join(storagePath, fileName));
+
+    // write file
+    await fs.writeFile(localPath, Buffer.from(data, 'base64'));
 
     // save the new file in db in files collection & return the new file
     const result = await dbClient.db.collection('files')
@@ -350,10 +376,17 @@ class FilesController {
       return;
     }
 
-    // read data from file
-    const data = await fsClient.readFile(document.localPath);
-    // if document is not found at localPath return error
-    if (data === null) {
+    // // read data from file
+    // const data = await fsClient.readFile(document.localPath);
+    // // if document is not found at localPath return error
+    // if (data === null) {
+    //   res.status(404).send({ error: 'Not found' });
+    //   return;
+    // }
+    let data;
+    try {
+      data = await fs.readFile(document.localPath);
+    } catch (e) { // if document is not found at localPath return error
       res.status(404).send({ error: 'Not found' });
       return;
     }
