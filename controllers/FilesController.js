@@ -107,51 +107,51 @@ class FilesController {
     });
   }
 
-  // /**
-  //  * GET /files/:id
-  //  * Retrieves requesting user's file documents based on the ID.
-  //  * @param {Request} req Request to server
-  //  * @param {Response} res Response from server
-  //  */
-  // static async getShow(req, res) {
-  //   // get token from X-Token header in request
-  //   const token = req.get('X-Token');
-  //   if (!token) {
-  //     res.status(401).send({ error: 'Unauthorized' });
-  //     return;
-  //   }
+  /**
+   * GET /files/:id
+   * Retrieves requesting user's file documents based on the ID.
+   * @param {Request} req Request to server
+   * @param {Response} res Response from server
+   */
+  static async getShow(req, res) {
+    // get token from X-Token header in request
+    const token = req.get('X-Token');
+    if (!token) {
+      res.status(401).send({ error: 'Unauthorized' });
+      return;
+    }
 
-  //   const key = `auth_${token}`;
-  //   // retrive user id from redis
-  //   const userId = await redisClient.get(key);
-  //   if (!userId) {
-  //     res.status(401).send({ error: 'Unauthorized' });
-  //     return;
-  //   }
+    const key = `auth_${token}`;
+    // retrive user id from redis
+    const userId = await redisClient.get(key);
+    if (!userId) {
+      res.status(401).send({ error: 'Unauthorized' });
+      return;
+    }
 
-  //   // retrieve document of given id linked to current user
-  //   const documentId = req.params.id;
-  //   if (documentId.length !== 24) { // ObjectId Argument must be a string of 12 bytes
-  //     res.status(404).send({ error: 'Not found' });
-  //     return;
-  //   }
-  //   const document = await dbClient.db.collection('files')
-  //     .findOne({ _id: new ObjectId(documentId), userId: new ObjectId(userId) });
-  //   if (!document) {
-  //     res.status(404).send({ error: 'Not found' });
-  //     return;
-  //   }
+    // retrieve document of given id linked to current user
+    const documentId = req.params.id;
+    if (documentId.length !== 24) { // ObjectId Argument must be a string of 12 bytes
+      res.status(404).send({ error: 'Not found' });
+      return;
+    }
+    const document = await dbClient.db.collection('files')
+      .findOne({ _id: new ObjectId(documentId), userId: new ObjectId(userId) });
+    if (!document) {
+      res.status(404).send({ error: 'Not found' });
+      return;
+    }
 
-  //   // send document
-  //   res.send({
-  //     id: document._id.toString(),
-  //     userId: document.userId.toString(),
-  //     name: document.name,
-  //     type: document.type,
-  //     isPublic: document.isPublic,
-  //     parentId: document.parentId === '0' ? 0 : document.parentId.toString(),
-  //   });
-  // }
+    // send document
+    res.send({
+      id: document._id.toString(),
+      userId: document.userId.toString(),
+      name: document.name,
+      type: document.type,
+      isPublic: document.isPublic,
+      parentId: document.parentId === '0' ? 0 : document.parentId.toString(),
+    });
+  }
 
   // /**
   //  * GET /files
@@ -214,25 +214,25 @@ class FilesController {
   //   res.send(responseFiles);
   // }
 
-  static async getShow(req, res) {
-    const token = req.header('X-Token');
-    const key = `auth_${token}`;
-    const userId = await redisClient.get(key);
-    if (!userId) {
-      res.status(401).json({ error: 'Unauthorized' });
-      return;
-    }
-    const { id } = req.params;
-    const files = dbClient.db.collection('files');
-    const objectId = new ObjectId(id);
-    const objectId2 = new ObjectId(userId);
-    const file = await files.findOne({ _id: objectId, userId: objectId2 });
-    if (!file) {
-      res.status(404).json({ error: 'Not found' });
-      return;
-    }
-    res.status(200).json(file);
-  }
+  // static async getShow(req, res) {
+  //   const token = req.header('X-Token');
+  //   const key = `auth_${token}`;
+  //   const userId = await redisClient.get(key);
+  //   if (!userId) {
+  //     res.status(401).json({ error: 'Unauthorized' });
+  //     return;
+  //   }
+  //   const { id } = req.params;
+  //   const files = dbClient.db.collection('files');
+  //   const objectId = new ObjectId(id);
+  //   const objectId2 = new ObjectId(userId);
+  //   const file = await files.findOne({ _id: objectId, userId: objectId2 });
+  //   if (!file) {
+  //     res.status(404).json({ error: 'Not found' });
+  //     return;
+  //   }
+  //   res.status(200).json(file);
+  // }
 
   static async getIndex(req, res) {
     const token = req.header('X-Token');
