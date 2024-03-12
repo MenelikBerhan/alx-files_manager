@@ -251,6 +251,14 @@ class FilesController {
   // } else {
   //   query = { parentId: ObjectId(parentId), userId: ObjectId(user) };
   // }
+  //   const result = await files.aggregate([
+  //     { $match: query },
+  //     { $skip: parseInt(page, 10) * 20 },
+  //     { $limit: 20 },
+  //   ]).toArray();
+  //   const newArr = result.map(({ _id, ...rest }) => ({ id: _id, ...rest }));
+  //   res.status(200).json(newArr);
+  // }
 
   /**
    * GET /files
@@ -284,7 +292,7 @@ class FilesController {
 
     // if parentId is given find users document in it. Else return from root (parentId = 0)
     let filter;
-    if (parentId === '0') filter = { userId: new ObjectId(userId), parentId };
+    if (parentId === '0') filter = { userId: new ObjectId(userId) };
     else filter = { userId: new ObjectId(userId), parentId: new ObjectId(parentId) };
 
     // get page no from query string. each page contains 20 documents & page no. starts from 0.
@@ -292,7 +300,7 @@ class FilesController {
     // create pipeline and aggregate
     const pipeline = [
       { $match: filter }, // match based on filter
-      { $sort: { _id: 1 } }, // sort by id
+      // { $sort: { _id: 1 } }, // sort by id
       { $skip: parseInt(page, 10) * 20 }, // skip to page
       { $limit: 20 },
     ];
