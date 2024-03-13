@@ -124,11 +124,11 @@ describe('API endpoints', function () {
           if (err) done(err);
           else {
             expect(res.statusCode).to.equal(201);
-            const { email, id } = JSON.parse(body);
-            expect(email).to.equal('tayitu@adwa.com');
-            expect(id.length).to.equal(24);
-            const user = await testDb.collection('users').findOne({ email });
-            expect(user._id.toString()).to.equal(id);
+            const { email: responseEmail, id: responseId } = JSON.parse(body);
+            expect(responseEmail).to.equal('tayitu@adwa.com');
+            expect(responseId.length).to.equal(24);
+            const user = await testDb.collection('users').findOne({ email: responseEmail });
+            expect(user._id.toString()).to.equal(responseId);
             expect(user.password).to.equal(hashedPassword);
             done();
           }
