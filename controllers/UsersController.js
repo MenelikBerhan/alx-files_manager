@@ -4,6 +4,11 @@ import { ObjectId } from 'mongodb';
 import dbClient from '../utils/db';
 import redisClient from '../utils/redis';
 
+const Bull = require('bull');
+// create a queue named userQueue to handle
+// logging welcome message (using worker.js)
+const userQueue = new Bull('userQueue');
+
 /**
  * Handles `/users` & `/users/me` endpoint.
  */
@@ -38,6 +43,9 @@ class UsersController {
     // add new user to db
     const newUser = { email, password: hashedPassword };
     const result = await dbClient.db.collection('users').insertOne(newUser);
+
+    // add job to userQueue
+    userQueue.add({ userId: result.insertedId });
 
     // respnd with id & email of created user
     res.status(201).send({ id: result.insertedId, email });

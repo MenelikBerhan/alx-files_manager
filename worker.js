@@ -18,11 +18,11 @@ fileQueue.process(async (job, done) => {
 
   // check if fileId & userId exist for each job. If not raise error.
   if (!job.data.fileId) {
-    done(new Error({ error: 'Missing fileId' }));
+    done(new Error('Missing fileId'));
     return;
   }
   if (!job.data.userId) {
-    done(new Error({ error: 'Missing userId' }));
+    done(new Error('Missing userId'));
     return;
   }
 
@@ -30,7 +30,7 @@ fileQueue.process(async (job, done) => {
   const document = await dbClient.db.collection('files')
     .findOne({ _id: new ObjectId(fileId), userId: new ObjectId(userId) });
   if (!document) {
-    done(new Error({ error: 'File not found' }));
+    done(new Error('File not found'));
     return;
   }
 
@@ -56,4 +56,24 @@ fileQueue.process(async (job, done) => {
       })
       .catch((err) => { done(err); });
   });
+});
+
+// create a consumer queue named userQueue. Jobs will have userId
+const userQueue = new Bull('userQueue');
+
+// Prints Welcome <email>! for newly created user
+userQueue.process(async (job, done) => {
+  const { userId } = job.data;
+  if (!userId) {
+    done(new Error('Missing userId'));
+  }
+
+  // get user from db
+  const user = await dbClient.db.collection('users')
+    .findOne({ _id: new ObjectId(userId) });
+  if (!user) {
+    done(new Error('User not found'));
+  }
+  console.log(`Welcome ${user.email}`);
+  done();
 });
