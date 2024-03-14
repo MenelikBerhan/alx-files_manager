@@ -70,7 +70,7 @@ describe('API endpoints', function () {
 
   after(async function () {
     // remove test inserts into db & redis
-    await testDb.collection('users').deleteOne({ email: 'tayitu@adwa.com' });
+    await testDb.collection('users').deleteOne({ email: 'tayitu@adwa.com' }); // inserted in POST /users
     await testDb.collection('users').deleteOne({ email: 'menelik@adwa.com' });
     await testDb.collection('users').deleteOne({ email: 'minilik@adwa.com' });
 
@@ -320,6 +320,7 @@ describe('API endpoints', function () {
       // remove inserted files in test
       await testDb.collection('files').deleteOne({ _id: new ObjectId(folderId) });
       await testDb.collection('files').deleteOne({ _id: new ObjectId(fileId) });
+      await testDb.collection('files').deleteOne({ name: 'music' }); // created in POST /files
     });
 
     it('If the name is missing, return an error', function (done) {
