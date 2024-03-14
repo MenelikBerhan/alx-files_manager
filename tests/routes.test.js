@@ -56,7 +56,7 @@ describe('API endpoints', function () {
       .deleteOne({ email: 'menelik@adwa.com' });
   });
 
-  describe.skip('GET /status', function () {
+  describe('GET /status', function () {
     it('Should return correct message & code', function (done) {
       request.get('http://localhost:5000/status', (err, res, body) => {
         if (err) done(err);
@@ -70,7 +70,7 @@ describe('API endpoints', function () {
     });
   });
 
-  describe.skip('GET /stats', function () {
+  describe('GET /stats', function () {
     it('Should return correct message & code', function (done) {
       request.get('http://localhost:5000/stats', (err, res, body) => {
         if (err) done(err);
@@ -84,7 +84,7 @@ describe('API endpoints', function () {
     });
   });
 
-  describe.skip('POST /users', function () {
+  describe('POST /users', function () {
     it('Return error when email is missing', function (done) {
       request.post(
         {
@@ -242,11 +242,13 @@ describe('API endpoints', function () {
         {
           url: 'http://localhost:5000/disconnect',
           headers: { 'X-Token': userTokenForDisconnect },
-        }, (err, res, body) => {
+        }, async (err, res, body) => {
           if (err) done(err);
           else {
             expect(res.statusCode).to.equal(204);
             expect(body.length).to.equal(0);
+            const redisValue = await redisClient.get(`auth_${userTokenForDisconnect}`);
+            expect(redisValue).to.equal(null);
             done();
           }
         },
